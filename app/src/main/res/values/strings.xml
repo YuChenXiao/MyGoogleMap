@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">MyGoogleMap</string>
+    <string name="title_activity_maps">Map</string>
+    <string-array name="spot">
+        <item>九份老街</item>
+        <item>台北101</item>
+        <item>日月潭</item>
+        <item>宜蘭礁溪</item>
+    </string-array>
+</resources>
