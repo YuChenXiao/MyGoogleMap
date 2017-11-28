@@ -4,6 +4,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -13,10 +14,12 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -51,41 +54,95 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setMap(0,0,null);
         // Add a marker in Sydney and move the camera
     }
+//經緯度 地名
 
     void setMap(double lat,double lng,String str) {
-        LatLng sydney = new LatLng(lat,lng);
-        mMap.addMarker(new MarkerOptions().position(sydney).title(str));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        LatLng latLng = new LatLng(lat,lng);
+        mMap.addMarker(new MarkerOptions().position(latLng).title(str));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
     }
 //Menu
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu, menu);
-        MenuItem item = menu.findItem(R.id.spinner);
-        Spinner spinner = (Spinner) MenuItemCompat.getActionView(item);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.spot, R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        spinner.setOnItemSelectedListener(itemSelectedListener);
-        return super.onCreateOptionsMenu(menu);
-    }
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            getMenuInflater().inflate(R.menu.menu, menu);
+            int[] ids = {R.id.pointOfViewSpinner, R.id.spotSpinner, R.id.mapTypeSpinner};
+            int[] arrays = {R.array.point_of_view, R.array.spot, R.array.map_type};
+
+            for (int i = 0; i < ids.length; i++) {
+                MenuItem item = menu.findItem(ids[i]);
+                Spinner spinner = (Spinner) MenuItemCompat.getActionView(item);
+
+                ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                        this, arrays[i], R.layout.simple_spinner_item);
+                adapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+
+                spinner.setAdapter(adapter);
+                spinner.setGravity(Gravity.RIGHT);
+                spinner.setOnItemSelectedListener(itemSelectedListener);
+            }
+            return true;
+        }
+
 
     AdapterView.OnItemSelectedListener itemSelectedListener = new AdapterView.OnItemSelectedListener() {
         @Override
-        public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
+            if (position ==0)
+            {
+                return;
+            }
+            String itemName = ((TextView)view).getText().toString();
+
             Toast.makeText(MapsActivity.this, ((TextView) view).getText(), Toast.LENGTH_SHORT).show();
-            switch (position){
-                case 0:
-                    setMap(25.110035,121.845193,"九份老街");
+//視角
+            switch (parent.getId()){
+                case R.id.pointOfViewSpinner:
+                    switch (position){
+                        case 1:
+                            setPointOfView(0,10.9f);
+                            break;
+                        case 2:
+                            //  角度,放大
+                            setPointOfView(60,10);
+                            break;
+                    }
                     break;
-                case 1:
-                    setMap(25.033429,121.564475,"台北101");
+//景點
+                case R.id.spotSpinner:
+                    switch (position){
+                        case 1:
+                            setMap(25.110035,121.845193,itemName);
+                            break;
+                        case 2:
+                            setMap(25.033429,121.564475,itemName);
+                            break;
+                        case 3:
+                            setMap(23.857404,120.915963,itemName);
+                            break;
+                        case 4:
+                            setMap(24.826043,121.771302,itemName);
+                            break;
+                    }
                     break;
-                case 2:
-                    setMap(23.857404,120.915963,"日月潭");
-                    break;
-                case 3:
-                    setMap(24.826043,121.771302,"宜蘭礁溪");
+//地圖類型
+                case R.id.mapTypeSpinner:
+                    switch (position){
+                        case 1:
+                            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                            break;
+                        case 2:
+                            mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+                            break;
+                        case 3:
+                            mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                            break;
+                        case 4:
+                            mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                            break;
+                        case 5:
+                            mMap.setMapType(GoogleMap.MAP_TYPE_NONE);
+                            break;
+                    }
                     break;
             }
         }
@@ -94,5 +151,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
     };
+//鏡頭動畫效果
+    void setPointOfView(float angle, float level) {
+        LatLng latlng = mMap.getCameraPosition().target;
+        CameraUpdate camUpdate = CameraUpdateFactory.
+                newCameraPosition(new CameraPosition.Builder()
+                        .target(latlng)
+                        .tilt(angle)
+                        .zoom(level)
+                        .build());
+        mMap.animateCamera(camUpdate);
+    }
 
 }
